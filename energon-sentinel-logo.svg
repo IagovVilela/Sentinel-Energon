@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 600" width="512" height="600" role="img" aria-label="Energon Sentinel">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#22D3EE"/>
+      <stop offset="0.55" stop-color="#6366F1"/>
+      <stop offset="1" stop-color="#A855F7"/>
+    </linearGradient>
+    <radialGradient id="bg" cx="50%" cy="42%" r="65%">
+      <stop offset="0" stop-color="#1B1F4B"/>
+      <stop offset="1" stop-color="#0A0C1F"/>
+    </radialGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="6" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <rect width="512" height="600" rx="48" fill="#0A0C1F"/>
+
+  <!-- hexágono externo -->
+  <polygon points="256,56 429,156 429,356 256,456 83,356 83,156" fill="url(#bg)" stroke="url(#g)" stroke-width="10" stroke-linejoin="round" filter="url(#glow)"/>
+  <!-- hexágono interno -->
+  <polygon points="256,96 394,176 394,336 256,416 118,336 118,176" fill="none" stroke="url(#g)" stroke-width="2.5" stroke-opacity="0.45" stroke-linejoin="round"/>
+
+  <!-- cristal de energia -->
+  <polygon points="256,142 306,256 256,370 206,256" fill="url(#g)" fill-opacity="0.18" stroke="url(#g)" stroke-width="3" stroke-linejoin="round"/>
+  <polyline points="256,142 256,370" stroke="url(#g)" stroke-width="1.5" stroke-opacity="0.5" fill="none"/>
+  <polyline points="206,256 306,256" stroke="url(#g)" stroke-width="1.5" stroke-opacity="0.5" fill="none"/>
+
+  <!-- linha de pulso (monitoramento) -->
+  <polyline points="96,262 188,262 218,206 258,322 292,236 316,262 416,262" fill="none" stroke="#FFFFFF" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>
+  <polyline points="96,262 188,262 218,206 258,322 292,236 316,262 416,262" fill="none" stroke="url(#g)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- indicador online -->
+  <circle cx="416" cy="262" r="11" fill="#34D399" filter="url(#glow)"/>
+
+  <!-- wordmark -->
+  <text x="256" y="518" text-anchor="middle" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="54" font-weight="800" letter-spacing="10" fill="#FFFFFF">ENERGON</text>
+  <text x="256" y="560" text-anchor="middle" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="26" font-weight="600" letter-spacing="14" fill="url(#g)">SENTINEL</text>
+</svg>
