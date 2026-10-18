@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AlertRuleForm } from "@/components/alerts/alert-rule-form";
+import { AlertRuleActions } from "@/components/alerts/alert-rule-actions";
 
 export default async function AlertsPage() {
   const user = await requireUser();
@@ -30,8 +31,13 @@ export default async function AlertsPage() {
       <div className="grid gap-3 md:grid-cols-2">
         {rules.map((r) => (
           <Card key={r.id}>
-            <CardHeader>
+            <CardHeader className="flex-row items-start justify-between gap-2 space-y-0">
               <CardTitle className="text-base">{r.email}</CardTitle>
+              {canEdit && (
+                <AlertRuleActions
+                  rule={{ id: r.id, email: r.email, enabled: r.enabled }}
+                />
+              )}
             </CardHeader>
             <CardContent className="flex flex-wrap gap-1">
               {r.enabled ? (

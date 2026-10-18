@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/auth";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CredentialActions } from "@/components/credentials/credential-actions";
+import { CredentialEditActions } from "@/components/credentials/credential-edit-actions";
 import { CredentialForm } from "@/components/credentials/credential-form";
 import { ImportExport } from "@/components/credentials/import-export";
 
@@ -98,7 +99,20 @@ export default async function CredentialsPage({
                     )}
                   </div>
                 </div>
-                {canEdit && <CredentialActions credentialId={c.id} />}
+                {canEdit && (
+                  <div className="flex flex-col items-end gap-2">
+                    <CredentialActions credentialId={c.id} />
+                    <CredentialEditActions
+                      credential={{
+                        id: c.id,
+                        label: c.label,
+                        username: c.username,
+                        expiresAt: c.expiresAt,
+                        notes: c.notes,
+                      }}
+                    />
+                  </div>
+                )}
               </CardHeader>
               {c.notes && (
                 <CardContent>

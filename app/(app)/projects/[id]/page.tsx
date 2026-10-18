@@ -9,8 +9,10 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ServiceForm } from "@/components/projects/service-form";
-import { RunCheckButton } from "@/components/projects/run-check-button";
 import { HealthCheckForm } from "@/components/projects/health-check-form";
+import { ProjectEditActions } from "@/components/projects/project-edit-actions";
+import { ServiceEditActions } from "@/components/projects/service-edit-actions";
+import { HealthCheckActions } from "@/components/projects/health-check-actions";
 
 export default async function ProjectDetailPage({
   params,
@@ -73,7 +75,22 @@ export default async function ProjectDetailPage({
             ))}
           </div>
         </div>
-        {canEdit && <ServiceForm projectId={project.id} />}
+        {canEdit && (
+          <div className="flex flex-col items-end gap-2">
+            <ServiceForm projectId={project.id} />
+            <ProjectEditActions
+              project={{
+                id: project.id,
+                name: project.name,
+                description: project.description,
+                publicUrl: project.publicUrl,
+                environment: project.environment,
+                statusPageEnabled: project.statusPageEnabled,
+                statusPageSlug: project.statusPageSlug,
+              }}
+            />
+          </div>
+        )}
       </div>
 
       {Object.entries(byCategory).map(([category, services]) => (
@@ -126,6 +143,20 @@ export default async function ProjectDetailPage({
                         Ver credenciais ({service._count.credentials})
                       </Link>
                     </Button>
+                    {canEdit && (
+                      <ServiceEditActions
+                        service={{
+                          id: service.id,
+                          name: service.name,
+                          category: service.category,
+                          provider: service.provider,
+                          adminUrl: service.adminUrl,
+                          hostingUrl: service.hostingUrl,
+                          gitUrl: service.gitUrl,
+                          notes: service.notes,
+                        }}
+                      />
+                    )}
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
@@ -151,7 +182,16 @@ export default async function ProjectDetailPage({
                               </span>
                             )}
                           </div>
-                          {canEdit && <RunCheckButton checkId={hc.id} />}
+                          {canEdit && (
+                            <HealthCheckActions
+                              check={{
+                                id: hc.id,
+                                name: hc.name,
+                                url: hc.url,
+                                expectedStatus: hc.expectedStatus,
+                              }}
+                            />
+                          )}
                         </li>
                       ))}
                     </ul>
