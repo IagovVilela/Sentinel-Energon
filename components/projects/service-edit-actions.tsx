@@ -78,8 +78,11 @@ export function ServiceEditActions({ service }: { service: ServiceData }) {
   }
 
   return (
-    <Card className="w-full">
+    <Card className="w-full border-amber-500/30">
       <CardContent className="pt-4">
+        <p className="text-sm font-semibold mb-3">
+          Editar serviço: {service.name}
+        </p>
         <form onSubmit={submit} className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1 sm:col-span-2">
             <Label>Nome</Label>
@@ -143,7 +146,7 @@ export function ServiceEditActions({ service }: { service: ServiceData }) {
           </div>
           <div className="flex gap-2 sm:col-span-2">
             <Button type="submit" disabled={loading}>
-              Salvar
+              Salvar alterações
             </Button>
             <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
               Cancelar
