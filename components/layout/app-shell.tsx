@@ -12,6 +12,7 @@ import {
   LogOut,
   Search,
   User,
+  Building2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ const nav = [
   { href: "/credentials", label: "Cofre", icon: KeyRound },
   { href: "/alerts", label: "Alertas", icon: Bell },
   { href: "/me", label: "Meu perfil", icon: User },
+  { href: "/company", label: "Empresa", icon: Building2 },
   { href: "/settings", label: "Configurações", icon: Settings },
 ];
 

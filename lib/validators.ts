@@ -128,3 +128,14 @@ export const personalSnippetSchema = z.object({
 });
 
 export const personalAssetKindSchema = z.enum(["photo", "resume"]);
+
+export const companyProfileSchema = z.object({
+  name: z.string().min(1).max(160),
+  tagline: z.string().max(280).optional().nullable(),
+  email: z.string().email().optional().nullable().or(z.literal("")),
+  phone: z.string().max(40).optional().nullable(),
+  whatsapp: z.string().max(40).optional().nullable(),
+  instagram: z.string().max(80).optional().nullable(),
+  websiteUrl: z.string().url().optional().nullable().or(z.literal("")),
+  subscriptionUrl: z.string().url().optional().nullable().or(z.literal("")),
+});

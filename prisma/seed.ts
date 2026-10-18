@@ -87,6 +87,27 @@ async function main() {
     },
   });
 
+  // Empresa Energon — preenche defaults só na criação
+  const existingCompany = await prisma.companyProfile.findUnique({
+    where: { userId: owner.id },
+  });
+  if (!existingCompany) {
+    await prisma.companyProfile.create({
+      data: {
+        userId: owner.id,
+        name: "Energon",
+        tagline: "Soluções digitais para o seu negócio",
+        email,
+        phone: "+55 12 98700-2929",
+        whatsapp: "+55 12 98700-2929",
+        instagram: "@energontech",
+        websiteUrl: "https://energon.up.railway.app/",
+        subscriptionUrl:
+          "https://assinates-energon-production.up.railway.app",
+      },
+    });
+  }
+
   // Remove dados de demonstração (não recria)
   const demos = await prisma.project.findMany({
     where: {
