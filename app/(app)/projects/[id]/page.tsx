@@ -1,13 +1,13 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
-import { CATEGORY_LABELS, formatDuration } from "@/lib/utils";
+import { formatDuration } from "@/lib/utils";
 import { StatusDot } from "@/components/status-dot";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { ServiceForm } from "@/components/projects/service-form";
 import { ProjectEditActions } from "@/components/projects/project-edit-actions";
-import { ServiceHubCard } from "@/components/projects/service-hub-card";
+import { ProjectServicesPanel } from "@/components/projects/project-services-panel";
 
 export default async function ProjectDetailPage({
   params,
@@ -46,12 +46,6 @@ export default async function ProjectDetailPage({
   if (!project) notFound();
 
   const canEdit = user.role === "owner" || user.role === "admin";
-  const byCategory = project.services.reduce<
-    Record<string, typeof project.services>
-  >((acc, s) => {
-    (acc[s.category] ||= []).push(s);
-    return acc;
-  }, {});
 
   return (
     <div className="space-y-6">
@@ -114,23 +108,13 @@ export default async function ProjectDetailPage({
         </Card>
       )}
 
-      {Object.entries(byCategory).map(([category, services]) => (
-        <section key={category} className="space-y-3">
-          <h2 className="text-sm font-medium text-muted uppercase tracking-wide">
-            {CATEGORY_LABELS[category] || category}
-          </h2>
-          <div className="grid gap-4">
-            {services.map((service) => (
-              <ServiceHubCard
-                key={service.id}
-                projectName={project.name}
-                canEdit={canEdit}
-                service={service}
-              />
-            ))}
-          </div>
-        </section>
-      ))}
+      {project.services.length > 0 && (
+        <ProjectServicesPanel
+          projectName={project.name}
+          canEdit={canEdit}
+          services={project.services}
+        />
+      )}
 
       <section className="space-y-3">
         <h2 className="text-sm font-medium text-muted uppercase tracking-wide">
