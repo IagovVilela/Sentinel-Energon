@@ -71,6 +71,22 @@ async function main() {
     });
   }
 
+  // Perfil pessoal do owner (não apaga links/assets existentes)
+  const profileName =
+    process.env.SEED_OWNER_NAME || "Iago Vilela Ventura";
+  await prisma.personalProfile.upsert({
+    where: { userId: owner.id },
+    create: {
+      userId: owner.id,
+      fullName: profileName,
+      email,
+    },
+    update: {
+      fullName: profileName,
+      email,
+    },
+  });
+
   // Remove dados de demonstração (não recria)
   const demos = await prisma.project.findMany({
     where: {

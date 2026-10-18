@@ -11,6 +11,7 @@ import {
   Settings,
   LogOut,
   Search,
+  User,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ const nav = [
   { href: "/projects", label: "Sistemas", icon: FolderKanban },
   { href: "/credentials", label: "Cofre", icon: KeyRound },
   { href: "/alerts", label: "Alertas", icon: Bell },
+  { href: "/me", label: "Meu perfil", icon: User },
   { href: "/settings", label: "Configurações", icon: Settings },
 ];
 

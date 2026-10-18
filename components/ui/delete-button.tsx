@@ -13,6 +13,7 @@ export function DeleteButton({
   redirectTo,
   size = "sm",
   variant = "destructive",
+  onDeleted,
 }: {
   endpoint: string;
   label?: string;
@@ -20,6 +21,7 @@ export function DeleteButton({
   redirectTo?: string;
   size?: "sm" | "default" | "icon";
   variant?: "destructive" | "ghost" | "outline";
+  onDeleted?: () => void;
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -35,6 +37,7 @@ export function DeleteButton({
         return;
       }
       toast.success("Excluído");
+      onDeleted?.();
       if (redirectTo) router.push(redirectTo);
       router.refresh();
     } finally {

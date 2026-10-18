@@ -106,3 +106,25 @@ export const maintenanceSchema = z.object({
 
 export const emptyToNull = (v: string | null | undefined) =>
   !v || v === "" ? null : v;
+
+export const personalProfileSchema = z.object({
+  fullName: z.string().min(1).max(160),
+  email: z.string().email(),
+  linkedinUrl: z.string().url().optional().nullable().or(z.literal("")),
+  companyUrl: z.string().url().optional().nullable().or(z.literal("")),
+  headline: z.string().max(280).optional().nullable(),
+});
+
+export const personalLinkSchema = z.object({
+  label: z.string().min(1).max(120),
+  url: z.string().url(),
+  sortOrder: z.number().int().optional(),
+});
+
+export const personalSnippetSchema = z.object({
+  title: z.string().min(1).max(120),
+  body: z.string().min(1).max(10000),
+  sortOrder: z.number().int().optional(),
+});
+
+export const personalAssetKindSchema = z.enum(["photo", "resume"]);
