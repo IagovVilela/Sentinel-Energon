@@ -15,9 +15,27 @@ async function main() {
 
   const passwordHash = await hashPassword(password);
 
+  // Migra owners antigos (ex.: owner@energon.local) para o e-mail atual
+  const previousOwners = await prisma.user.findMany({
+    where: { role: "owner", NOT: { email } },
+  });
+  for (const prev of previousOwners) {
+    await prisma.session.deleteMany({ where: { userId: prev.id } });
+    await prisma.user.delete({ where: { id: prev.id } });
+  }
+
   const owner = await prisma.user.upsert({
     where: { email },
-    update: { passwordHash, name, role: "owner" },
+    update: {
+      passwordHash,
+      name,
+      role: "owner",
+      totpEnabled: false,
+      totpSecret: null,
+      failedLogins: 0,
+      lockedUntil: null,
+      reauthAt: null,
+    },
     create: {
       email,
       name,
@@ -27,7 +45,11 @@ async function main() {
     },
   });
 
-  await prisma.alertRule.deleteMany({ where: { email } });
+  await prisma.session.deleteMany({ where: { userId: owner.id } });
+
+  await prisma.alertRule.deleteMany({
+    where: { OR: [{ email }, { userId: owner.id }] },
+  });
   await prisma.alertRule.create({
     data: {
       userId: owner.id,

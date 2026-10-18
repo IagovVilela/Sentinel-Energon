@@ -41,10 +41,7 @@ docker compose exec web npx prisma db seed
 
 Acesse: http://localhost:3000
 
-Credenciais do seed (padrão):
-
-- E-mail: `owner@energon.local`
-- Senha: `ChangeMeOwner123!`
+Credenciais do owner vêm de `SEED_OWNER_EMAIL` / `SEED_OWNER_PASSWORD` no `.env`.
 
 No primeiro login o owner **deve** ativar o 2FA (QR Code).
 
