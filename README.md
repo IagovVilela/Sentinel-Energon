@@ -113,7 +113,7 @@ Se `RESEND_API_KEY` estiver vazio, o painel usa `SMTP_HOST`, `SMTP_PORT`, `SMTP_
 | `npm run dev` | Next.js em desenvolvimento |
 | `npm run worker` | Worker de monitoramento |
 | `npm run db:migrate` | Migrations |
-| `npm run db:seed` | Seed demo |
+| `npm run db:seed` | Cria/atualiza o owner e limpa demos |
 | `npm test` | Testes (crypto, incidentes, reauth) |
 
 ## Documentação de arquitetura
@@ -122,4 +122,4 @@ Veja [ARQUITETURA.md](./ARQUITETURA.md).
 
 ## Status público (opt-in)
 
-O seed cria a página `/status/demo-commerce`. Ative `statusPageEnabled` + `statusPageSlug` no projeto para expor status sem URLs internas nem credenciais.
+Para página de status pública, ative `statusPageEnabled` + `statusPageSlug` no sistema (sem URLs internas nem credenciais).
