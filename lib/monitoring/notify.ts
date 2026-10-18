@@ -28,21 +28,32 @@ async function recipients(filter: {
   });
 }
 
-export async function notifyIncidentDown(opts: {
-  incidentId: string;
+type NotifyContext = {
   project: Project;
   service: Service;
   check: HealthCheck;
-  error: string;
   at: Date;
-}) {
+  consecutiveFails?: number | null;
+  lastLatencyMs?: number | null;
+  httpStatus?: number | null;
+  error?: string;
+};
+
+export async function notifyIncidentDown(
+  opts: NotifyContext & { incidentId: string; error: string },
+) {
   const rules = await recipients({ notifyDown: true });
   const html = downEmailHtml({
     projectName: opts.project.name,
+    environment: opts.project.environment,
     serviceName: opts.service.name,
     checkName: opts.check.name,
+    checkUrl: opts.check.url,
     error: opts.error,
-    at: opts.at.toLocaleString("pt-BR"),
+    at: opts.at.toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }),
+    consecutiveFails: opts.consecutiveFails,
+    lastLatencyMs: opts.lastLatencyMs,
+    httpStatus: opts.httpStatus,
     adminUrl: opts.service.adminUrl,
     hostingUrl: opts.service.hostingUrl,
     gitUrl: opts.service.gitUrl,
@@ -60,20 +71,22 @@ export async function notifyIncidentDown(opts: {
   }
 }
 
-export async function notifyIncidentRecovery(opts: {
-  project: Project;
-  service: Service;
-  check: HealthCheck;
-  duration: string;
-  at: Date;
-}) {
+export async function notifyIncidentRecovery(
+  opts: NotifyContext & { duration: string },
+) {
   const rules = await recipients({ notifyRecovery: true });
   const html = recoveryEmailHtml({
     projectName: opts.project.name,
+    environment: opts.project.environment,
     serviceName: opts.service.name,
     checkName: opts.check.name,
+    checkUrl: opts.check.url,
     duration: opts.duration,
-    at: opts.at.toLocaleString("pt-BR"),
+    at: opts.at.toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }),
+    lastLatencyMs: opts.lastLatencyMs,
+    adminUrl: opts.service.adminUrl,
+    hostingUrl: opts.service.hostingUrl,
+    gitUrl: opts.service.gitUrl,
     panelUrl: panelUrl(opts.project.id),
   });
   for (const rule of rules) {
@@ -87,21 +100,24 @@ export async function notifyIncidentRecovery(opts: {
   }
 }
 
-export async function notifyIncidentReminder(opts: {
-  project: Project;
-  service: Service;
-  check: HealthCheck;
-  startedAt: Date;
-  at: Date;
-}) {
+export async function notifyIncidentReminder(
+  opts: NotifyContext & { startedAt: Date },
+) {
   const rules = await recipients({ notifyDown: true });
   const duration = formatDuration(opts.at.getTime() - opts.startedAt.getTime());
   const html = downEmailHtml({
     projectName: opts.project.name,
+    environment: opts.project.environment,
     serviceName: opts.service.name,
     checkName: opts.check.name,
-    error: `Incidente ainda aberto (duração ${duration})`,
-    at: opts.at.toLocaleString("pt-BR"),
+    checkUrl: opts.check.url,
+    error: opts.error || `Incidente ainda aberto (duração ${duration})`,
+    at: opts.at.toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }),
+    consecutiveFails: opts.consecutiveFails,
+    lastLatencyMs: opts.lastLatencyMs,
+    httpStatus: opts.httpStatus,
+    duration,
+    reminder: true,
     adminUrl: opts.service.adminUrl,
     hostingUrl: opts.service.hostingUrl,
     gitUrl: opts.service.gitUrl,
@@ -164,7 +180,9 @@ export async function processExpiryAlerts() {
       label: cred.label,
       projectName: cred.service.project.name,
       serviceName: cred.service.name,
-      expiresAt: cred.expiresAt.toLocaleString("pt-BR"),
+      expiresAt: cred.expiresAt.toLocaleString("pt-BR", {
+        timeZone: "America/Sao_Paulo",
+      }),
       daysLeft,
       panelUrl: panelUrl(cred.service.projectId),
     });
@@ -191,7 +209,6 @@ export async function runRetention() {
   const days = Number(process.env.CHECK_RETENTION_DAYS || 30);
   const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
-  // Aggregate into daily buckets before delete
   const old = await prisma.checkResult.findMany({
     where: { checkedAt: { lt: cutoff } },
     select: {

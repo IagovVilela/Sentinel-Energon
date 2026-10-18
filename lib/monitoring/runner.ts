@@ -77,6 +77,9 @@ export async function runHealthCheck(healthCheckId: string) {
         check,
         error: exec.errorMessage || "Check falhou",
         at: now,
+        consecutiveFails,
+        lastLatencyMs: exec.latencyMs,
+        httpStatus: exec.httpStatus,
       });
     }
 
@@ -104,6 +107,8 @@ export async function runHealthCheck(healthCheckId: string) {
           check,
           duration: formatDuration(durationMs),
           at: now,
+          lastLatencyMs: exec.latencyMs,
+          httpStatus: exec.httpStatus,
         });
       }
     }
@@ -125,6 +130,10 @@ export async function runHealthCheck(healthCheckId: string) {
             check,
             startedAt: open.startedAt,
             at: now,
+            consecutiveFails,
+            lastLatencyMs: exec.latencyMs,
+            httpStatus: exec.httpStatus,
+            error: exec.errorMessage || open.cause || "Check falhou",
           });
           await prisma.incident.update({
             where: { id: open.id },

@@ -102,18 +102,29 @@ export function baseEmailLayout(title: string, bodyHtml: string): string {
 </html>`;
 }
 
-export function downEmailHtml(opts: {
-  projectName: string;
-  serviceName: string;
-  checkName: string;
-  error: string;
-  at: string;
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function detailRow(label: string, value: string | null | undefined) {
+  if (value == null || value === "") return "";
+  return `<tr>
+    <td style="padding:6px 0;color:#94A3B8;vertical-align:top;width:140px;">${escapeHtml(label)}</td>
+    <td style="padding:6px 0;color:#F8FAFC;">${escapeHtml(value)}</td>
+  </tr>`;
+}
+
+function actionLinks(opts: {
   adminUrl?: string | null;
   hostingUrl?: string | null;
   gitUrl?: string | null;
   panelUrl: string;
 }) {
-  const links = [
+  return [
     opts.adminUrl
       ? `<a href="${opts.adminUrl}" style="color:#22D3EE;">Painel do serviço</a>`
       : null,
@@ -127,36 +138,100 @@ export function downEmailHtml(opts: {
   ]
     .filter(Boolean)
     .join(" · ");
+}
+
+export type IncidentEmailDetails = {
+  projectName: string;
+  environment?: string | null;
+  serviceName: string;
+  checkName: string;
+  checkUrl?: string | null;
+  error: string;
+  at: string;
+  consecutiveFails?: number | null;
+  lastLatencyMs?: number | null;
+  httpStatus?: number | null;
+  duration?: string | null;
+  reminder?: boolean;
+  adminUrl?: string | null;
+  hostingUrl?: string | null;
+  gitUrl?: string | null;
+  panelUrl: string;
+};
+
+export function downEmailHtml(opts: IncidentEmailDetails) {
+  const title = opts.reminder
+    ? "Lembrete: serviço ainda fora do ar"
+    : "Serviço fora do ar";
+  const headline = opts.reminder
+    ? `<p><strong style="color:#F59E0B;">⏱ Incidente ainda aberto</strong></p>`
+    : `<p><strong style="color:#F43F5E;">⚠ Queda detectada</strong></p>`;
+
+  const rows = [
+    detailRow("Sistema", opts.projectName),
+    detailRow("Ambiente", opts.environment),
+    detailRow("Serviço", opts.serviceName),
+    detailRow("Check", opts.checkName),
+    detailRow("URL checada", opts.checkUrl),
+    detailRow("Erro / causa", opts.error),
+    detailRow("Horário", opts.at),
+    detailRow(
+      "Falhas consecutivas",
+      opts.consecutiveFails != null ? String(opts.consecutiveFails) : null,
+    ),
+    detailRow(
+      "Última latência",
+      opts.lastLatencyMs != null ? `${opts.lastLatencyMs} ms` : null,
+    ),
+    detailRow(
+      "HTTP status",
+      opts.httpStatus != null ? String(opts.httpStatus) : null,
+    ),
+    detailRow("Duração", opts.duration),
+  ].join("");
 
   return baseEmailLayout(
-    "Serviço fora do ar",
-    `<p><strong style="color:#F43F5E;">⚠ Queda detectada</strong></p>
-     <p><b>Sistema:</b> ${opts.projectName}<br/>
-     <b>Serviço:</b> ${opts.serviceName}<br/>
-     <b>Check:</b> ${opts.checkName}<br/>
-     <b>Erro:</b> ${opts.error}<br/>
-     <b>Horário:</b> ${opts.at}</p>
-     <p>${links}</p>`,
+    title,
+    `${headline}
+     <table width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;margin:12px 0 16px;">${rows}</table>
+     <p style="margin:0;">${actionLinks(opts)}</p>
+     <p style="margin:16px 0 0;font-size:12px;color:#94A3B8;">Abra o Sentinel, verifique o serviço e a hospedagem, e confirme se o health check voltou a responder.</p>`,
   );
 }
 
 export function recoveryEmailHtml(opts: {
   projectName: string;
+  environment?: string | null;
   serviceName: string;
   checkName: string;
+  checkUrl?: string | null;
   duration: string;
   at: string;
+  lastLatencyMs?: number | null;
+  adminUrl?: string | null;
+  hostingUrl?: string | null;
+  gitUrl?: string | null;
   panelUrl: string;
 }) {
+  const rows = [
+    detailRow("Sistema", opts.projectName),
+    detailRow("Ambiente", opts.environment),
+    detailRow("Serviço", opts.serviceName),
+    detailRow("Check", opts.checkName),
+    detailRow("URL checada", opts.checkUrl),
+    detailRow("Duração da queda", opts.duration),
+    detailRow("Horário da recuperação", opts.at),
+    detailRow(
+      "Latência atual",
+      opts.lastLatencyMs != null ? `${opts.lastLatencyMs} ms` : null,
+    ),
+  ].join("");
+
   return baseEmailLayout(
     "Serviço recuperado",
     `<p><strong style="color:#34D399;">✓ Serviço voltou ao ar</strong></p>
-     <p><b>Sistema:</b> ${opts.projectName}<br/>
-     <b>Serviço:</b> ${opts.serviceName}<br/>
-     <b>Check:</b> ${opts.checkName}<br/>
-     <b>Duração da queda:</b> ${opts.duration}<br/>
-     <b>Horário:</b> ${opts.at}</p>
-     <p><a href="${opts.panelUrl}" style="color:#22D3EE;">Abrir no Sentinel</a></p>`,
+     <table width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;margin:12px 0 16px;">${rows}</table>
+     <p style="margin:0;">${actionLinks(opts)}</p>`,
   );
 }
 

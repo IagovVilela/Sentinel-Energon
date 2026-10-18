@@ -42,10 +42,22 @@ async function main() {
     await prisma.session.deleteMany({ where: { userId: owner.id } });
   }
 
-  const alertCount = await prisma.alertRule.count({
-    where: { OR: [{ email }, { userId: owner.id }] },
+  // Garante alerta no e-mail do owner (ex.: iagovventura@gmail.com)
+  const existingAlert = await prisma.alertRule.findFirst({
+    where: { email },
   });
-  if (alertCount === 0) {
+  if (existingAlert) {
+    await prisma.alertRule.update({
+      where: { id: existingAlert.id },
+      data: {
+        userId: owner.id,
+        enabled: true,
+        notifyDown: true,
+        notifyRecovery: true,
+        notifyExpiry: true,
+      },
+    });
+  } else {
     await prisma.alertRule.create({
       data: {
         userId: owner.id,
@@ -54,6 +66,7 @@ async function main() {
         notifyRecovery: true,
         notifyExpiry: true,
         reminderHours: 4,
+        enabled: true,
       },
     });
   }

@@ -5,13 +5,15 @@ import { StatusDot } from "@/components/status-dot";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { LatencyChart } from "@/components/dashboard/latency-chart";
+import { UptimeHeatmap } from "@/components/dashboard/uptime-heatmap";
 import { formatDuration } from "@/lib/utils";
 
 export default async function DashboardPage() {
   await requireUser();
   const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const since14d = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
 
-  const [projects, openIncidents, expiringCredentials, recentResults, incidents] =
+  const [projects, openIncidents, expiringCredentials, recentResults, heatmapResults, incidents] =
     await Promise.all([
       prisma.project.findMany({
         orderBy: { name: "asc" },
@@ -32,14 +34,25 @@ export default async function DashboardPage() {
         take: 300,
         include: { healthCheck: { select: { name: true } } },
       }),
+      prisma.checkResult.findMany({
+        where: { checkedAt: { gte: since14d } },
+        orderBy: { checkedAt: "asc" },
+        select: {
+          status: true,
+          latencyMs: true,
+          checkedAt: true,
+        },
+        take: 20000,
+      }),
       prisma.incident.findMany({
         where: { status: "open" },
         include: {
-          project: { select: { id: true, name: true } },
+          project: { select: { id: true, name: true, environment: true } },
           service: { select: { name: true } },
+          healthCheck: { select: { name: true, url: true } },
         },
         orderBy: { startedAt: "desc" },
-        take: 8,
+        take: 12,
       }),
     ]);
 
@@ -95,6 +108,17 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      <section className="space-y-3">
+        <h2 className="text-sm font-medium text-muted uppercase tracking-wide">
+          Mapa de disponibilidade (14 dias)
+        </h2>
+        <Card>
+          <CardContent className="pt-4">
+            <UptimeHeatmap results={heatmapResults} days={14} />
+          </CardContent>
+        </Card>
+      </section>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="space-y-3">
@@ -156,14 +180,29 @@ export default async function DashboardPage() {
                   href={`/projects/${i.project.id}`}
                   className="block rounded-md border border-card-border p-3 hover:bg-white/5"
                 >
-                  <div className="flex justify-between gap-2">
-                    <div>
+                  <div className="flex justify-between gap-2 items-start">
+                    <div className="min-w-0 space-y-1">
                       <p className="text-sm font-medium">
                         {i.project.name} · {i.service.name}
                       </p>
-                      <p className="text-xs text-muted">{i.cause}</p>
+                      <div className="flex flex-wrap gap-1">
+                        <Badge>{i.project.environment}</Badge>
+                        {i.healthCheck && <Badge>{i.healthCheck.name}</Badge>}
+                      </div>
+                      <p className="text-xs text-muted break-words">{i.cause}</p>
+                      {i.healthCheck?.url && (
+                        <p className="text-[11px] text-muted truncate">
+                          {i.healthCheck.url}
+                        </p>
+                      )}
+                      <p className="text-[11px] text-muted">
+                        Desde{" "}
+                        {i.startedAt.toLocaleString("pt-BR", {
+                          timeZone: "America/Sao_Paulo",
+                        })}
+                      </p>
                     </div>
-                    <span className="text-xs text-down">
+                    <span className="text-xs text-down shrink-0">
                       {formatDuration(Date.now() - i.startedAt.getTime())}
                     </span>
                   </div>
