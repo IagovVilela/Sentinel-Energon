@@ -15,19 +15,33 @@ export function Setup2faForm() {
   const [secret, setSecret] = useState("");
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
+  const [loadingQr, setLoadingQr] = useState(true);
+
+  async function loadQr(rotate = false) {
+    setLoadingQr(true);
+    try {
+      const res = await fetch(
+        `/api/auth/totp/setup${rotate ? "?rotate=1" : ""}`,
+      );
+      const d = await res.json();
+      if (d.qrDataUrl) {
+        setQr(d.qrDataUrl);
+        setSecret(d.secret);
+        if (rotate) {
+          toast.message("Novo QR gerado — escaneie de novo no autenticador");
+        }
+      } else {
+        toast.error(d.error || "Falha ao gerar 2FA");
+      }
+    } catch {
+      toast.error("Erro ao carregar 2FA");
+    } finally {
+      setLoadingQr(false);
+    }
+  }
 
   useEffect(() => {
-    fetch("/api/auth/totp/setup")
-      .then((r) => r.json())
-      .then((d) => {
-        if (d.qrDataUrl) {
-          setQr(d.qrDataUrl);
-          setSecret(d.secret);
-        } else {
-          toast.error(d.error || "Falha ao gerar 2FA");
-        }
-      })
-      .catch(() => toast.error("Erro ao carregar 2FA"));
+    void loadQr(false);
   }, []);
 
   async function confirm() {
@@ -36,7 +50,7 @@ export function Setup2faForm() {
       const res = await fetch("/api/auth/totp/setup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code }),
+        body: JSON.stringify({ code: code.replace(/\s/g, "") }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -54,12 +68,35 @@ export function Setup2faForm() {
   return (
     <Card>
       <CardContent className="pt-6 space-y-4">
+        {loadingQr && !qr && (
+          <p className="text-sm text-muted text-center">Gerando QR Code…</p>
+        )}
         {qr && (
           <div className="flex flex-col items-center gap-3">
-            <Image src={qr} alt="QR Code 2FA" width={180} height={180} unoptimized />
+            <Image
+              src={qr}
+              alt="QR Code 2FA"
+              width={180}
+              height={180}
+              unoptimized
+            />
             <p className="text-xs text-muted break-all text-center">
-              Chave manual: <code className="text-accent-cyan">{secret}</code>
+              Chave manual:{" "}
+              <code className="text-accent-cyan">{secret}</code>
             </p>
+            <p className="text-[11px] text-muted text-center max-w-sm">
+              Escaneie uma vez. Se o código falhar, apague a conta antiga no
+              autenticador, gere um novo QR e escaneie de novo.
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={loadingQr}
+              onClick={() => void loadQr(true)}
+            >
+              Gerar novo QR
+            </Button>
           </div>
         )}
         <div className="space-y-2">
@@ -67,12 +104,20 @@ export function Setup2faForm() {
           <Input
             id="code"
             value={code}
-            onChange={(e) => setCode(e.target.value)}
+            onChange={(e) =>
+              setCode(e.target.value.replace(/\D/g, "").slice(0, 6))
+            }
             placeholder="000000"
             inputMode="numeric"
+            autoComplete="one-time-code"
+            maxLength={6}
           />
         </div>
-        <Button onClick={confirm} disabled={loading || !code} className="w-full">
+        <Button
+          onClick={confirm}
+          disabled={loading || code.length !== 6}
+          className="w-full"
+        >
           Confirmar e ativar
         </Button>
       </CardContent>

@@ -17,9 +17,14 @@ export async function verifyTotp(
   token: string,
 ): Promise<boolean> {
   try {
+    const cleaned = token.replace(/\s/g, "").trim();
+    if (!/^\d{6}$/.test(cleaned)) return false;
+
+    // ±1 passo (30s) cobre atraso de relógio entre celular e servidor
     const result = await verify({
-      secret,
-      token: token.replace(/\s/g, ""),
+      secret: secret.replace(/\s/g, "").toUpperCase(),
+      token: cleaned,
+      epochTolerance: 30,
     });
     return result.valid === true;
   } catch {
