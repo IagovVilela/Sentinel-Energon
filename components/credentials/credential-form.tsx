@@ -12,9 +12,15 @@ import { Card, CardContent } from "@/components/ui/card";
 export function CredentialForm({
   services,
   defaultServiceId,
+  lockService = false,
+  buttonLabel = "Nova credencial",
+  compact = false,
 }: {
   services: Array<{ id: string; name: string; project: { name: string } }>;
   defaultServiceId?: string;
+  lockService?: boolean;
+  buttonLabel?: string;
+  compact?: boolean;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -59,9 +65,14 @@ export function CredentialForm({
 
   if (!open) {
     return (
-      <Button onClick={() => setOpen(true)} disabled={!services.length}>
+      <Button
+        size={compact ? "sm" : "default"}
+        variant={compact ? "ghost" : "default"}
+        onClick={() => setOpen(true)}
+        disabled={!services.length}
+      >
         <Plus className="h-4 w-4" />
-        Nova credencial
+        {buttonLabel}
       </Button>
     );
   }
@@ -70,21 +81,23 @@ export function CredentialForm({
     <Card className="w-full max-w-lg">
       <CardContent className="pt-4">
         <form onSubmit={submit} className="space-y-3">
-          <div className="space-y-1">
-            <Label>Serviço</Label>
-            <select
-              className="w-full h-9 rounded-md border border-card-border bg-[#0d1024] px-3 text-sm"
-              value={form.serviceId}
-              onChange={(e) => setForm({ ...form, serviceId: e.target.value })}
-              required
-            >
-              {services.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.project.name} · {s.name}
-                </option>
-              ))}
-            </select>
-          </div>
+          {!lockService && (
+            <div className="space-y-1">
+              <Label>Serviço</Label>
+              <select
+                className="w-full h-9 rounded-md border border-card-border bg-[#0d1024] px-3 text-sm"
+                value={form.serviceId}
+                onChange={(e) => setForm({ ...form, serviceId: e.target.value })}
+                required
+              >
+                {services.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.project.name} · {s.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1">
               <Label>Tipo</Label>

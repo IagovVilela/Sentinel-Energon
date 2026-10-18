@@ -1,18 +1,13 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ExternalLink, GitBranch, Server } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { CATEGORY_LABELS, formatDuration } from "@/lib/utils";
 import { StatusDot } from "@/components/status-dot";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { ServiceForm } from "@/components/projects/service-form";
-import { HealthCheckForm } from "@/components/projects/health-check-form";
 import { ProjectEditActions } from "@/components/projects/project-edit-actions";
-import { ServiceEditActions } from "@/components/projects/service-edit-actions";
-import { HealthCheckActions } from "@/components/projects/health-check-actions";
+import { ServiceHubCard } from "@/components/projects/service-hub-card";
 
 export default async function ProjectDetailPage({
   params,
@@ -28,7 +23,17 @@ export default async function ProjectDetailPage({
         orderBy: [{ category: "asc" }, { name: "asc" }],
         include: {
           healthChecks: { orderBy: { name: "asc" } },
-          _count: { select: { credentials: true } },
+          credentials: {
+            orderBy: [{ expiresAt: "asc" }, { label: "asc" }],
+            select: {
+              id: true,
+              type: true,
+              label: true,
+              username: true,
+              expiresAt: true,
+              notes: true,
+            },
+          },
         },
       },
       incidents: {
@@ -41,19 +46,18 @@ export default async function ProjectDetailPage({
   if (!project) notFound();
 
   const canEdit = user.role === "owner" || user.role === "admin";
-  const byCategory = project.services.reduce<Record<string, typeof project.services>>(
-    (acc, s) => {
-      (acc[s.category] ||= []).push(s);
-      return acc;
-    },
-    {},
-  );
+  const byCategory = project.services.reduce<
+    Record<string, typeof project.services>
+  >((acc, s) => {
+    (acc[s.category] ||= []).push(s);
+    return acc;
+  }, {});
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-        <div>
-          <div className="flex items-center gap-3 mb-1">
+      <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
+        <div className="min-w-0">
+          <div className="flex items-center gap-3 mb-1 flex-wrap">
             <h1 className="text-2xl font-semibold">{project.name}</h1>
             <StatusDot status={project.status} />
           </div>
@@ -65,7 +69,7 @@ export default async function ProjectDetailPage({
                 href={project.publicUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="text-xs text-accent-cyan underline"
+                className="text-xs text-accent-cyan underline break-all"
               >
                 {project.publicUrl}
               </a>
@@ -74,9 +78,13 @@ export default async function ProjectDetailPage({
               <Badge key={t}>{t}</Badge>
             ))}
           </div>
+          <p className="text-xs text-muted mt-3 max-w-xl">
+            Tudo deste sistema fica nesta página: links, credenciais e
+            monitoramento de cada serviço. Não é preciso abrir outras abas.
+          </p>
         </div>
         {canEdit && (
-          <div className="flex flex-col items-end gap-2">
+          <div className="flex flex-col items-stretch sm:items-end gap-2 shrink-0">
             <ServiceForm projectId={project.id} />
             <ProjectEditActions
               project={{
@@ -93,112 +101,32 @@ export default async function ProjectDetailPage({
         )}
       </div>
 
+      {project.services.length === 0 && (
+        <Card>
+          <CardContent className="pt-6 space-y-2">
+            <p className="text-sm font-medium">Nenhum serviço ainda</p>
+            <p className="text-sm text-muted">
+              Clique em <strong>Novo serviço</strong> e cadastre, por exemplo,
+              Front-end ou API. Nele você coloca Git, hospedagem, credenciais e
+              o health check.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
       {Object.entries(byCategory).map(([category, services]) => (
         <section key={category} className="space-y-3">
           <h2 className="text-sm font-medium text-muted uppercase tracking-wide">
             {CATEGORY_LABELS[category] || category}
           </h2>
-          <div className="grid gap-3">
+          <div className="grid gap-4">
             {services.map((service) => (
-              <Card key={service.id}>
-                <CardHeader className="flex-row items-start justify-between gap-3 space-y-0">
-                  <div>
-                    <CardTitle className="flex items-center gap-2">
-                      {service.name}
-                      {service.provider && (
-                        <Badge>{service.provider}</Badge>
-                      )}
-                    </CardTitle>
-                    {service.notes && (
-                      <p className="text-xs text-muted mt-1">{service.notes}</p>
-                    )}
-                  </div>
-                  <div className="flex flex-wrap gap-2 justify-end">
-                    {service.adminUrl && (
-                      <Button asChild size="sm" variant="secondary">
-                        <a href={service.adminUrl} target="_blank" rel="noreferrer">
-                          <ExternalLink className="h-3.5 w-3.5" />
-                          Abrir painel
-                        </a>
-                      </Button>
-                    )}
-                    {service.hostingUrl && (
-                      <Button asChild size="sm" variant="outline">
-                        <a href={service.hostingUrl} target="_blank" rel="noreferrer">
-                          <Server className="h-3.5 w-3.5" />
-                          Hospedagem
-                        </a>
-                      </Button>
-                    )}
-                    {service.gitUrl && (
-                      <Button asChild size="sm" variant="outline">
-                        <a href={service.gitUrl} target="_blank" rel="noreferrer">
-                          <GitBranch className="h-3.5 w-3.5" />
-                          Git
-                        </a>
-                      </Button>
-                    )}
-                    <Button asChild size="sm" variant="ghost">
-                      <Link href={`/credentials?serviceId=${service.id}`}>
-                        Ver credenciais ({service._count.credentials})
-                      </Link>
-                    </Button>
-                    {canEdit && (
-                      <ServiceEditActions
-                        service={{
-                          id: service.id,
-                          name: service.name,
-                          category: service.category,
-                          provider: service.provider,
-                          adminUrl: service.adminUrl,
-                          hostingUrl: service.hostingUrl,
-                          gitUrl: service.gitUrl,
-                          notes: service.notes,
-                        }}
-                      />
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {service.healthChecks.length === 0 ? (
-                    <p className="text-xs text-muted">Nenhum health check.</p>
-                  ) : (
-                    <ul className="space-y-2">
-                      {service.healthChecks.map((hc) => (
-                        <li
-                          key={hc.id}
-                          className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-card-border px-3 py-2 text-sm"
-                        >
-                          <div className="flex items-center gap-2">
-                            <StatusDot
-                              status={hc.lastStatus === "fail" ? "down" : hc.lastStatus === "ok" ? "operational" : "unknown"}
-                              label={false}
-                            />
-                            <span>{hc.name}</span>
-                            <Badge>{hc.type}</Badge>
-                            {hc.lastLatencyMs != null && (
-                              <span className="text-xs text-muted">
-                                {hc.lastLatencyMs}ms
-                              </span>
-                            )}
-                          </div>
-                          {canEdit && (
-                            <HealthCheckActions
-                              check={{
-                                id: hc.id,
-                                name: hc.name,
-                                url: hc.url,
-                                expectedStatus: hc.expectedStatus,
-                              }}
-                            />
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                  {canEdit && <HealthCheckForm serviceId={service.id} />}
-                </CardContent>
-              </Card>
+              <ServiceHubCard
+                key={service.id}
+                projectName={project.name}
+                canEdit={canEdit}
+                service={service}
+              />
             ))}
           </div>
         </section>
